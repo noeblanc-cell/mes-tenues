@@ -68,7 +68,13 @@
   .card img{width:100%; aspect-ratio:3/4; object-fit:cover; display:block; background:var(--surface-2);}
   .card .cap{padding:10px 12px 12px; border-top:2px solid var(--accent);}
   .card .cap .name{font-family:'Fraunces',serif; font-size:15px;}
-  .card .cap .count{color:var(--muted); font-size:12px; margin-top:2px;}
+  .card .cap .row2{display:flex; align-items:center; justify-content:space-between; margin-top:5px; gap:8px;}
+  .card .cap .count{color:var(--muted); font-size:12px;}
+  .badge{
+    font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; white-space:nowrap;
+  }
+  .badge.complete{background:var(--accent-soft); color:var(--accent);}
+  .badge.incomplete{background:rgba(181,87,75,.15); color:var(--danger);}
 
   /* Overlays */
   .overlay{
@@ -94,17 +100,31 @@
   .detail-img img{width:100%; display:block; object-fit:cover;}
   .detail-name{font-size:24px; margin-bottom:4px;}
   .detail-sub{color:var(--muted); font-size:13px; margin-bottom:18px;}
+  .status-banner{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:600; padding:10px 14px; border-radius:10px; margin-bottom:18px;
+  }
+  .status-banner.complete{background:var(--accent-soft); color:var(--accent);}
+  .status-banner.incomplete{background:rgba(181,87,75,.14); color:var(--danger);}
+
   .item-row{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:16px 4px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:14px 4px; border-bottom:1px solid var(--line);
   }
   .item-row .lbl{font-size:15px;}
   .item-row .lbl .domain{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
+  .item-row .actions{display:flex; align-items:center; gap:8px; flex-shrink:0;}
   .item-row a{
     color:var(--accent); text-decoration:none; font-size:13px; font-weight:600;
-    border:1px solid var(--accent); border-radius:999px; padding:7px 14px; white-space:nowrap;
+    border:1px solid var(--accent); border-radius:999px; padding:7px 12px; white-space:nowrap;
   }
   .item-row a:active{background:var(--accent-soft);}
+  .own-toggle{
+    border:1px solid var(--line); background:var(--surface); color:var(--muted);
+    border-radius:999px; padding:7px 12px; font-size:13px; font-weight:600;
+    font-family:'Inter',sans-serif; white-space:nowrap;
+  }
+  .own-toggle.on{background:var(--accent); border-color:var(--accent); color:#191712;}
 
   /* Form */
   .field{margin-bottom:18px;}
@@ -128,6 +148,7 @@
   .items-block label{display:block; font-size:12px; color:var(--muted); margin-bottom:10px;}
   .item-edit-row{
     display:flex; gap:8px; margin-bottom:10px; align-items:flex-start;
+    padding-bottom:12px; border-bottom:1px solid var(--line);
   }
   .item-edit-row .fields{flex:1; display:flex; flex-direction:column; gap:8px;}
   .item-edit-row input{
@@ -135,6 +156,10 @@
     border-radius:10px; padding:10px 12px; font-size:14px; font-family:'Inter',sans-serif; width:100%;
   }
   .item-edit-row input:focus{outline:none; border-color:var(--accent);}
+  .owned-check{
+    display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-top:2px;
+  }
+  .owned-check input{width:17px; height:17px; accent-color:var(--accent); margin:0;}
   .remove-item{
     background:none; border:none; color:var(--danger); font-size:20px; padding:8px 4px; margin-top:2px;
   }
@@ -294,17 +319,31 @@ function renderGrid(){
   outfits.forEach(o=>{
     const card = document.createElement('div');
     card.className = 'card';
+    const complete = isComplete(o);
+    const missing = missingCount(o);
+    const badge = o.items.length === 0 ? ''
+      : complete ? `<span class="badge complete">Complète</span>`
+      : `<span class="badge incomplete">${missing} manquant${missing>1?'s':''}</span>`;
     card.innerHTML = `
       <img src="${o.image}" alt="${escapeHtml(o.name)}">
       <div class="cap">
         <div class="name serif">${escapeHtml(o.name)}</div>
-        <div class="count">${o.items.length} article${o.items.length>1?'s':''}</div>
+        <div class="row2">
+          <div class="count">${o.items.length} article${o.items.length>1?'s':''}</div>
+          ${badge}
+        </div>
       </div>`;
     card.addEventListener('click', ()=> openDetail(o.id));
     grid.appendChild(card);
   });
 }
 
+function isComplete(outfit){
+  return outfit.items.length > 0 && outfit.items.every(it => it.owned);
+}
+function missingCount(outfit){
+  return outfit.items.filter(it => !it.owned).length;
+}
 function escapeHtml(s){
   const d = document.createElement('div');
   d.textContent = s || '';
@@ -323,13 +362,38 @@ function openDetail(id){
   detailImg.src = o.image;
   detailName.textContent = o.name;
   detailSub.textContent = `${o.items.length} article${o.items.length>1?'s':''}`;
+
+  const complete = isComplete(o);
+  const missing = missingCount(o);
+  const existingBanner = document.getElementById('statusBanner');
+  if(existingBanner) existingBanner.remove();
+  if(o.items.length > 0){
+    const banner = document.createElement('div');
+    banner.id = 'statusBanner';
+    banner.className = 'status-banner ' + (complete ? 'complete' : 'incomplete');
+    banner.textContent = complete
+      ? 'Tenue complète — tu as tout'
+      : `Tenue incomplète — il te manque ${missing} article${missing>1?'s':''}`;
+    detailSub.insertAdjacentElement('afterend', banner);
+  }
+
   detailItems.innerHTML = '';
-  o.items.forEach(it=>{
+  o.items.forEach((it, idx)=>{
     const row = document.createElement('div');
     row.className = 'item-row';
     row.innerHTML = `
       <div class="lbl">${escapeHtml(it.label)}<span class="domain">${escapeHtml(domainOf(it.url))}</span></div>
-      <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener">Voir l'article</a>`;
+      <div class="actions">
+        <button type="button" class="own-toggle ${it.owned?'on':''}" data-idx="${idx}">${it.owned ? 'Je l\'ai' : 'À acheter'}</button>
+        <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener">Voir</a>
+      </div>`;
+    row.querySelector('.own-toggle').addEventListener('click', async ()=>{
+      const outfit = outfits.find(x=>x.id===id);
+      outfit.items[idx].owned = !outfit.items[idx].owned;
+      await putOutfit(outfit);
+      renderGrid();
+      openDetail(id);
+    });
     detailItems.appendChild(row);
   });
   detailOverlay.classList.add('open');
@@ -337,6 +401,8 @@ function openDetail(id){
 document.getElementById('closeDetail').addEventListener('click', ()=>{
   detailOverlay.classList.remove('open');
   currentDetailId = null;
+  const b = document.getElementById('statusBanner');
+  if(b) b.remove();
 });
 document.getElementById('deleteOutfit').addEventListener('click', async ()=>{
   if(!currentDetailId) return;
@@ -376,7 +442,7 @@ function openForm(outfit){
     imgPreview.style.display = 'block';
     imgHint.style.display = 'none';
     itemsList.innerHTML = '';
-    outfit.items.forEach(it => addItemRow(it.label, it.url));
+    outfit.items.forEach(it => addItemRow(it.label, it.url, it.owned));
     if(outfit.items.length === 0) addItemRow();
   }
   formOverlay.classList.add('open');
@@ -399,13 +465,18 @@ imgInput.addEventListener('change', (e)=>{
   reader.readAsDataURL(file);
 });
 
-function addItemRow(label='', url=''){
+function addItemRow(label='', url='', owned=false){
   const row = document.createElement('div');
   row.className = 'item-edit-row';
+  const checkId = 'own-' + Math.random().toString(36).slice(2);
   row.innerHTML = `
     <div class="fields">
       <input type="text" placeholder="Nom de l'article (ex. Pull col roulé)" class="item-label" value="${escapeHtml(label)}">
       <input type="url" placeholder="Lien d'achat (https://...)" class="item-url" value="${escapeHtml(url)}">
+      <label class="owned-check" for="${checkId}">
+        <input type="checkbox" id="${checkId}" class="item-owned" ${owned ? 'checked' : ''}>
+        Je l'ai déjà dans mon dressing
+      </label>
     </div>
     <button type="button" class="remove-item">×</button>`;
   row.querySelector('.remove-item').addEventListener('click', ()=> row.remove());
@@ -420,7 +491,8 @@ document.getElementById('saveForm').addEventListener('click', async ()=>{
 
   const items = [...itemsList.querySelectorAll('.item-edit-row')].map(row=>({
     label: row.querySelector('.item-label').value.trim(),
-    url: row.querySelector('.item-url').value.trim()
+    url: row.querySelector('.item-url').value.trim(),
+    owned: row.querySelector('.item-owned').checked
   })).filter(it => it.label && it.url);
 
   const outfit = {
