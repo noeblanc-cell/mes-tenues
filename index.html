@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#17161A">
+<title>Mes tenues</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#17161A;
+    --surface:#201F24;
+    --surface-2:#26252B;
+    --paper:#F1EDE6;
+    --muted:#9B968D;
+    --accent:#C9A24B;
+    --accent-soft:rgba(201,162,75,.16);
+    --line:#37353C;
+    --danger:#B5574B;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--paper);
+    font-family:'Inter',system-ui,sans-serif;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+    overscroll-behavior-y:none;
+  }
+  h1,h2,h3,.serif{font-family:'Fraunces',serif; font-weight:500;}
+
+  header{
+    padding:28px 20px 18px;
+    display:flex; align-items:flex-end; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+  }
+  header .title{font-size:28px; letter-spacing:.2px;}
+  header .subtitle{color:var(--muted); font-size:13px; margin-top:4px;}
+  .add-btn{
+    width:44px; height:44px; border-radius:50%;
+    background:var(--accent); color:#191712; border:none;
+    font-size:24px; line-height:1; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 14px var(--accent-soft);
+  }
+  .add-btn:active{transform:scale(.94);}
+
+  main{padding:18px 16px 100px;}
+  .empty{
+    text-align:center; padding:70px 20px; color:var(--muted);
+  }
+  .empty .serif{font-size:20px; color:var(--paper); margin-bottom:8px;}
+
+  .grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); overflow:hidden; cursor:pointer;
+  }
+  .card img{width:100%; aspect-ratio:3/4; object-fit:cover; display:block; background:var(--surface-2);}
+  .card .cap{padding:10px 12px 12px; border-top:2px solid var(--accent);}
+  .card .cap .name{font-family:'Fraunces',serif; font-size:15px;}
+  .card .cap .count{color:var(--muted); font-size:12px; margin-top:2px;}
+
+  /* Overlays */
+  .overlay{
+    position:fixed; inset:0; background:var(--bg);
+    display:none; flex-direction:column; z-index:50;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+  }
+  .overlay.open{display:flex;}
+  .ov-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 16px 12px; border-bottom:1px solid var(--line);
+  }
+  .icon-btn{
+    background:none; border:none; color:var(--paper); font-size:15px;
+    padding:8px 4px; font-family:'Inter',sans-serif;
+  }
+  .icon-btn.accent{color:var(--accent); font-weight:600;}
+  .icon-btn.danger{color:var(--danger);}
+  .ov-body{flex:1; overflow-y:auto; padding:0 16px 24px;}
+
+  /* Detail view */
+  .detail-img{width:100%; border-radius:var(--radius); overflow:hidden; margin:16px 0 20px; border:1px solid var(--line);}
+  .detail-img img{width:100%; display:block; object-fit:cover;}
+  .detail-name{font-size:24px; margin-bottom:4px;}
+  .detail-sub{color:var(--muted); font-size:13px; margin-bottom:18px;}
+  .item-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:16px 4px; border-bottom:1px solid var(--line);
+  }
+  .item-row .lbl{font-size:15px;}
+  .item-row .lbl .domain{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
+  .item-row a{
+    color:var(--accent); text-decoration:none; font-size:13px; font-weight:600;
+    border:1px solid var(--accent); border-radius:999px; padding:7px 14px; white-space:nowrap;
+  }
+  .item-row a:active{background:var(--accent-soft);}
+
+  /* Form */
+  .field{margin-bottom:18px;}
+  .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:7px; letter-spacing:.2px;}
+  .field input[type=text], .field input[type=url]{
+    width:100%; background:var(--surface); border:1px solid var(--line); color:var(--paper);
+    border-radius:10px; padding:12px 13px; font-size:15px; font-family:'Inter',sans-serif;
+  }
+  .field input:focus{outline:none; border-color:var(--accent);}
+
+  .img-picker{
+    width:100%; aspect-ratio:3/4; border-radius:var(--radius);
+    border:1.5px dashed var(--line); background:var(--surface);
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    color:var(--muted); font-size:13px; overflow:hidden; position:relative; margin-bottom:18px;
+  }
+  .img-picker img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+  .img-picker .hint{position:relative; z-index:1; text-align:center; padding:0 20px;}
+  .img-picker input{position:absolute; inset:0; opacity:0;}
+
+  .items-block label{display:block; font-size:12px; color:var(--muted); margin-bottom:10px;}
+  .item-edit-row{
+    display:flex; gap:8px; margin-bottom:10px; align-items:flex-start;
+  }
+  .item-edit-row .fields{flex:1; display:flex; flex-direction:column; gap:8px;}
+  .item-edit-row input{
+    background:var(--surface); border:1px solid var(--line); color:var(--paper);
+    border-radius:10px; padding:10px 12px; font-size:14px; font-family:'Inter',sans-serif; width:100%;
+  }
+  .item-edit-row input:focus{outline:none; border-color:var(--accent);}
+  .remove-item{
+    background:none; border:none; color:var(--danger); font-size:20px; padding:8px 4px; margin-top:2px;
+  }
+  .add-item-btn{
+    width:100%; padding:12px; border-radius:10px; border:1px dashed var(--line);
+    background:none; color:var(--muted); font-size:13px; font-family:'Inter',sans-serif; margin-top:4px;
+  }
+  .add-item-btn:active{border-color:var(--accent); color:var(--accent);}
+
+  .save-btn{
+    width:100%; padding:15px; border-radius:12px; border:none;
+    background:var(--accent); color:#191712; font-size:15px; font-weight:600;
+    font-family:'Inter',sans-serif; margin-top:6px;
+  }
+  .save-btn:active{transform:scale(.99);}
+  .save-btn[disabled]{opacity:.4;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="title serif">Mes tenues</div>
+    <div class="subtitle">Ton dressing, prêt à acheter</div>
+  </div>
+  <button class="add-btn" id="openAdd">+</button>
+</header>
+
+<main>
+  <div id="emptyState" class="empty" style="display:none;">
+    <div class="serif">Aucune tenue pour l'instant</div>
+    <div>Ajoute une photo de référence et les liens des articles qui la composent.</div>
+  </div>
+  <div id="grid" class="grid"></div>
+</main>
+
+<!-- DETAIL OVERLAY -->
+<div class="overlay" id="detailOverlay">
+  <div class="ov-header">
+    <button class="icon-btn" id="closeDetail">Fermer</button>
+    <div style="display:flex; gap:18px;">
+      <button class="icon-btn" id="editOutfit">Modifier</button>
+      <button class="icon-btn danger" id="deleteOutfit">Supprimer</button>
+    </div>
+  </div>
+  <div class="ov-body">
+    <div class="detail-img"><img id="detailImg" src="" alt=""></div>
+    <div class="detail-name serif" id="detailName"></div>
+    <div class="detail-sub" id="detailSub"></div>
+    <div id="detailItems"></div>
+  </div>
+</div>
+
+<!-- FORM OVERLAY -->
+<div class="overlay" id="formOverlay">
+  <div class="ov-header">
+    <button class="icon-btn" id="cancelForm">Annuler</button>
+    <div class="serif" id="formTitle" style="font-size:16px;">Nouvelle tenue</div>
+    <button class="icon-btn accent" id="saveForm">Enregistrer</button>
+  </div>
+  <div class="ov-body">
+    <label class="img-picker" id="imgPicker">
+      <img id="imgPreview" style="display:none;">
+      <div class="hint" id="imgHint">Toucher pour choisir une photo<br>de référence de la tenue</div>
+      <input type="file" accept="image/*" id="imgInput">
+    </label>
+
+    <div class="field">
+      <label>Nom de la tenue</label>
+      <input type="text" id="outfitName" placeholder="Ex. Look soirée d'automne">
+    </div>
+
+    <div class="items-block">
+      <label>Articles de la tenue (nom + lien d'achat)</label>
+      <div id="itemsList"></div>
+      <button class="add-item-btn" id="addItemRow">+ Ajouter un article</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB_NAME = 'mes-tenues-db';
+const STORE = 'outfits';
+let db;
+
+function openDB(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains(STORE)){
+        d.createObjectStore(STORE, { keyPath:'id' });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = e => reject(e);
+  });
+}
+function txStore(mode){ return db.transaction(STORE, mode).objectStore(STORE); }
+function getAllOutfits(){
+  return new Promise((resolve,reject)=>{
+    const req = txStore('readonly').getAll();
+    req.onsuccess = ()=> resolve(req.result.sort((a,b)=>b.createdAt-a.createdAt));
+    req.onerror = reject;
+  });
+}
+function putOutfit(outfit){
+  return new Promise((resolve,reject)=>{
+    const req = txStore('readwrite').put(outfit);
+    req.onsuccess = ()=> resolve();
+    req.onerror = reject;
+  });
+}
+function deleteOutfitDB(id){
+  return new Promise((resolve,reject)=>{
+    const req = txStore('readwrite').delete(id);
+    req.onsuccess = ()=> resolve();
+    req.onerror = reject;
+  });
+}
+
+// ---- State ----
+let outfits = [];
+let currentDetailId = null;
+let editingId = null;
+let formImageData = null;
+
+// ---- Elements ----
+const grid = document.getElementById('grid');
+const emptyState = document.getElementById('emptyState');
+
+const detailOverlay = document.getElementById('detailOverlay');
+const detailImg = document.getElementById('detailImg');
+const detailName = document.getElementById('detailName');
+const detailSub = document.getElementById('detailSub');
+const detailItems = document.getElementById('detailItems');
+
+const formOverlay = document.getElementById('formOverlay');
+const formTitle = document.getElementById('formTitle');
+const imgPicker = document.getElementById('imgPicker');
+const imgInput = document.getElementById('imgInput');
+const imgPreview = document.getElementById('imgPreview');
+const imgHint = document.getElementById('imgHint');
+const outfitNameInput = document.getElementById('outfitName');
+const itemsList = document.getElementById('itemsList');
+
+// ---- Render gallery ----
+function renderGrid(){
+  grid.innerHTML = '';
+  if(outfits.length === 0){
+    emptyState.style.display = 'block';
+    grid.style.display = 'none';
+    return;
+  }
+  emptyState.style.display = 'none';
+  grid.style.display = 'grid';
+  outfits.forEach(o=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${o.image}" alt="${escapeHtml(o.name)}">
+      <div class="cap">
+        <div class="name serif">${escapeHtml(o.name)}</div>
+        <div class="count">${o.items.length} article${o.items.length>1?'s':''}</div>
+      </div>`;
+    card.addEventListener('click', ()=> openDetail(o.id));
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+function domainOf(url){
+  try{ return new URL(url).hostname.replace('www.',''); }
+  catch{ return ''; }
+}
+
+// ---- Detail view ----
+function openDetail(id){
+  const o = outfits.find(x=>x.id===id);
+  if(!o) return;
+  currentDetailId = id;
+  detailImg.src = o.image;
+  detailName.textContent = o.name;
+  detailSub.textContent = `${o.items.length} article${o.items.length>1?'s':''}`;
+  detailItems.innerHTML = '';
+  o.items.forEach(it=>{
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML = `
+      <div class="lbl">${escapeHtml(it.label)}<span class="domain">${escapeHtml(domainOf(it.url))}</span></div>
+      <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener">Voir l'article</a>`;
+    detailItems.appendChild(row);
+  });
+  detailOverlay.classList.add('open');
+}
+document.getElementById('closeDetail').addEventListener('click', ()=>{
+  detailOverlay.classList.remove('open');
+  currentDetailId = null;
+});
+document.getElementById('deleteOutfit').addEventListener('click', async ()=>{
+  if(!currentDetailId) return;
+  if(!confirm('Supprimer cette tenue ?')) return;
+  await deleteOutfitDB(currentDetailId);
+  outfits = outfits.filter(o=>o.id!==currentDetailId);
+  detailOverlay.classList.remove('open');
+  renderGrid();
+});
+document.getElementById('editOutfit').addEventListener('click', ()=>{
+  const o = outfits.find(x=>x.id===currentDetailId);
+  if(!o) return;
+  detailOverlay.classList.remove('open');
+  openForm(o);
+});
+
+// ---- Form ----
+function resetForm(){
+  editingId = null;
+  formImageData = null;
+  outfitNameInput.value = '';
+  itemsList.innerHTML = '';
+  imgPreview.style.display = 'none';
+  imgHint.style.display = 'block';
+  addItemRow();
+  formTitle.textContent = 'Nouvelle tenue';
+}
+
+function openForm(outfit){
+  resetForm();
+  if(outfit){
+    editingId = outfit.id;
+    formTitle.textContent = 'Modifier la tenue';
+    outfitNameInput.value = outfit.name;
+    formImageData = outfit.image;
+    imgPreview.src = outfit.image;
+    imgPreview.style.display = 'block';
+    imgHint.style.display = 'none';
+    itemsList.innerHTML = '';
+    outfit.items.forEach(it => addItemRow(it.label, it.url));
+    if(outfit.items.length === 0) addItemRow();
+  }
+  formOverlay.classList.add('open');
+}
+document.getElementById('openAdd').addEventListener('click', ()=> openForm(null));
+document.getElementById('cancelForm').addEventListener('click', ()=>{
+  formOverlay.classList.remove('open');
+});
+
+imgInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    formImageData = reader.result;
+    imgPreview.src = formImageData;
+    imgPreview.style.display = 'block';
+    imgHint.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+});
+
+function addItemRow(label='', url=''){
+  const row = document.createElement('div');
+  row.className = 'item-edit-row';
+  row.innerHTML = `
+    <div class="fields">
+      <input type="text" placeholder="Nom de l'article (ex. Pull col roulé)" class="item-label" value="${escapeHtml(label)}">
+      <input type="url" placeholder="Lien d'achat (https://...)" class="item-url" value="${escapeHtml(url)}">
+    </div>
+    <button type="button" class="remove-item">×</button>`;
+  row.querySelector('.remove-item').addEventListener('click', ()=> row.remove());
+  itemsList.appendChild(row);
+}
+document.getElementById('addItemRow').addEventListener('click', ()=> addItemRow());
+
+document.getElementById('saveForm').addEventListener('click', async ()=>{
+  const name = outfitNameInput.value.trim();
+  if(!name){ alert('Donne un nom à la tenue.'); return; }
+  if(!formImageData){ alert('Ajoute une photo de référence.'); return; }
+
+  const items = [...itemsList.querySelectorAll('.item-edit-row')].map(row=>({
+    label: row.querySelector('.item-label').value.trim(),
+    url: row.querySelector('.item-url').value.trim()
+  })).filter(it => it.label && it.url);
+
+  const outfit = {
+    id: editingId || (Date.now() + '-' + Math.random().toString(36).slice(2)),
+    name,
+    image: formImageData,
+    items,
+    createdAt: editingId ? (outfits.find(o=>o.id===editingId)?.createdAt || Date.now()) : Date.now()
+  };
+  await putOutfit(outfit);
+  outfits = await getAllOutfits();
+  formOverlay.classList.remove('open');
+  renderGrid();
+});
+
+// ---- Init ----
+(async function init(){
+  await openDB();
+  outfits = await getAllOutfits();
+  renderGrid();
+})();
+</script>
+</body>
+</html>
